@@ -61,12 +61,14 @@ def get_product(products_list, url_prefix=''):
         response = requests.get(item)
         soup = BeautifulSoup(response.text, 'lxml')
         product['name'] = soup.find('h1').text
-        product['normal-price'] = soup.find('p', class_='normal-price').text
-        product['ppack'] = soup.find('p', class_="ppack").text
-        product['nalichie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[2]
-        product['naznachenie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[4]
-        product['naznachenie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[4]
-
+        # product['normal-price'] = soup.find('p', class_='normal-price').text
+        # product['ppack'] = soup.find('p', class_="ppack").text
+        # product['nalichie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[2]
+        # product['naznachenie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[4]
+        product['description'] = ''
+        descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
+        for description in descriptions:
+            product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
 
         print(product)
         break
@@ -82,15 +84,16 @@ def main():
     products_list = clear_products_list(products_list)
     get_product(products_list, url_prefix=prefix)
 
-    # response = requests.get('https://inshi.by/katalog/remmers')
-    # soup = BeautifulSoup(response.text, 'lxml')
-    # products_list = soup.find_all('span', class_='prod-title')
-
-    # for item in products_list:
-    #     print(item.find('a').get('href'))
-    # print(item.text)
-    # print(item)
-
 
 if __name__ == '__main__':
-    main()
+    # main()
+    product = {}
+    item = 'https://inshi.by/katalog/remmers/zashhita-drevesiny/antiseptiki/aqua-ig-15-impagniergrund-it'
+    response = requests.get(item)
+    soup = BeautifulSoup(response.text, 'lxml')
+    product['name'] = soup.find('h1').text
+    product['description'] = ''
+    descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
+    for description in descriptions:
+        product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
+    print(product)
