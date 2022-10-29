@@ -28,6 +28,8 @@ urls_list = [
     'https://inshi.by/katalog/remmers',
 ]
 
+prefix = 'https://inshi.by/'
+
 
 def get_products_list(urls_list: list) -> list:
     products_list = []
@@ -38,12 +40,17 @@ def get_products_list(urls_list: list) -> list:
     return products_list
 
 
-def clear_products_list(products_list: list) -> list:
+def clear_products_list(products_list: list):
     cleared_list = []
+    # for item in products_list:
+    #     if itme in exceptions_list:
+    #         continue
+    #
+    # print(products_list)
     for item in products_list:
         if item.text in exceptions_list:
             continue
-        cleared_list += item
+        cleared_list.append(item)
     return cleared_list
 
 
@@ -51,10 +58,14 @@ def main():
     products_list = get_products_list(urls_list)
     products_list = clear_products_list(products_list)
 
+    # response = requests.get('https://inshi.by/katalog/remmers')
+    # soup = BeautifulSoup(response.text, 'lxml')
+    # products_list = soup.find_all('span', class_='prod-title')
+
     for item in products_list:
-        # print(item.find('a').get('href'))
-        # print(item.text)
-        print(item)
+        print(item.find('a').get('href'))
+    # print(item.text)
+    # print(item)
 
 
 if __name__ == '__main__':
