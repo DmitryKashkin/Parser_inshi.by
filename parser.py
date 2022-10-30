@@ -99,11 +99,9 @@ def save_to_excel(products):
     wb.create_sheet(title='Первый лист', index=0)
     # получаем лист, с которым будем работать
     sheet = wb['Первый лист']
-    row = col = 1
-
-    for
-
-
+    row = 2
+    col = 1
+    sheet.append(field_names)
     for item in products:
         for key, value in item.items():
             cell = sheet.cell(row=row, column=col)
