@@ -37,6 +37,7 @@ field_names = [
     'description',
     'media',
     'technical_description',
+    'url',
 ]
 
 
@@ -68,7 +69,6 @@ def get_product(products_list, url_prefix=''):
     products = []
     for item in products_list:
         item = url_prefix + item.find('a').get('href')
-        # print (item)
         response = requests.get(item)
         soup = BeautifulSoup(response.text, 'lxml')
         product['name'] = soup.find('h1').text
@@ -83,8 +83,8 @@ def get_product(products_list, url_prefix=''):
         technical_description = soup.find('div', class_="prod-desc js-product").find('a', target="_blank")
         if technical_description:
             product['technical_description'] = prefix + technical_description.get('href')
-            # product['technical_description'] = soup.find('div', class_="prod-desc js-product").find('a', target="_blank").get('href')
-        print(product)
+        product['url'] = item
+        # print(product)
         products.append(product)
         break
     return products
@@ -99,9 +99,9 @@ def save_to_excel(products):
     wb.create_sheet(title='Первый лист', index=0)
     # получаем лист, с которым будем работать
     sheet = wb['Первый лист']
+    sheet.append(field_names)
     row = 2
     col = 1
-    sheet.append(field_names)
     for item in products:
         for key, value in item.items():
             cell = sheet.cell(row=row, column=col)
