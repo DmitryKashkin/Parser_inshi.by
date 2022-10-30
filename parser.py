@@ -60,13 +60,17 @@ def clear_products_list(products_list: list):
 
 
 def get_product(products_list, url_prefix=''):
-    product = {}
     products = []
+    i = 0
     for item in products_list:
+        product = {}
         item = url_prefix + item.find('a').get('href')
         response = requests.get(item)
+        if response.text == 'Illegal value of &amp;documents: BS2000':
+            continue
         soup = BeautifulSoup(response.text, 'lxml')
         product['name'] = soup.find('h1').text
+        print(product['name'])
         product['description'] = ''
         descriptions = soup.find('div', class_="sin-product-add-cart")
         descriptions = descriptions.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_siblings
@@ -85,7 +89,10 @@ def get_product(products_list, url_prefix=''):
         product['url'] = item
         # print(product)
         products.append(product)
-        break
+        i += 1
+        # if i > 10:
+        #     print(products)
+        #     break
     return products
 
 
@@ -100,8 +107,9 @@ def save_to_excel(products):
     sheet = wb['Первый лист']
     sheet.append(field_names)
     row = 2
-    col = 1
     for item in products:
+        col = 1
+        print(item['name'])
         for key, value in item.items():
             cell = sheet.cell(row=row, column=col)
             # print(value)
@@ -113,6 +121,12 @@ def save_to_excel(products):
     wb.save('product.xlsx')
 
 
+def load_json():
+    with open('products.json', 'r') as fp:
+        products = json.load(fp)
+    return products
+
+
 def main():
     products_list = get_products_list(urls_list)
     products_list = clear_products_list(products_list)
@@ -121,15 +135,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # product = {}
-    # item = 'https://inshi.by/katalog/remmers/zashhita-drevesiny/antiseptiki/aqua-ig-15-impagniergrund-it'
-    # response = requests.get(item)
-    # soup = BeautifulSoup(response.text, 'lxml')
-    # product['name'] = soup.find('h1').text
-    # product['description'] = ''
-    # descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
-    # for description in descriptions:
-    #     product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
-    # print(product)
-    # save_to_excel('test')
+    # main()
+    # products = load_json()
+    # save_to_excel(products)
