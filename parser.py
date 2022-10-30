@@ -9,6 +9,7 @@ https://inshi.by/katalog/instrument
 
 import requests
 from bs4 import BeautifulSoup
+import openpyxl
 
 exceptions_list = [
     'Кисти',
@@ -61,28 +62,48 @@ def get_product(products_list, url_prefix=''):
         response = requests.get(item)
         soup = BeautifulSoup(response.text, 'lxml')
         product['name'] = soup.find('h1').text
-        # product['normal-price'] = soup.find('p', class_='normal-price').text
-        # product['ppack'] = soup.find('p', class_="ppack").text
-        # product['nalichie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[2]
-        # product['naznachenie'] = soup.find('div', class_="prod-desc js-product").find_all('p')[4]
         product['description'] = ''
         descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
         for description in descriptions:
             product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
-
+        medias = soup.find_all('a', class_="fancybox")
+        product['media'] = []
+        for media in medias:
+            product['media'] += media.get('href')
+        product['technical_description'] = soup.find('div', class_="prod-desc js-product").find('a',
+                                                                                                target="_blank").get(
+            'href')
         print(product)
         break
-        # products_list += soup.find_all('span', class_='prod-title')
+    return product
 
-        # print(item.find('a').get('href'))
-    # print(item.text)
-    # print(item)
+def save_to_excel(products):
+
+
+    # создаем новый excel-файл
+    wb = openpyxl.Workbook()
+
+    # добавляем новый лист
+    wb.create_sheet(title='Первый лист', index=0)
+
+    # получаем лист, с которым будем работать
+    sheet = wb['Первый лист']
+
+    for row in range(1, 4):
+        for col in range(1, 4):
+            value = str(row) + str(col)
+            cell = sheet.cell(row=row, column=col)
+            cell.value = value
+
+    wb.save('example.xlsx')
+
 
 
 def main():
     products_list = get_products_list(urls_list)
     products_list = clear_products_list(products_list)
-    get_product(products_list, url_prefix=prefix)
+    products = get_product(products_list, url_prefix=prefix)
+
 
 
 if __name__ == '__main__':
