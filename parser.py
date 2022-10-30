@@ -57,6 +57,7 @@ def clear_products_list(products_list: list):
 
 def get_product(products_list, url_prefix=''):
     product = {}
+    products = []
     for item in products_list:
         item = url_prefix + item.find('a').get('href')
         response = requests.get(item)
@@ -74,29 +75,24 @@ def get_product(products_list, url_prefix=''):
                                                                                                 target="_blank").get(
             'href')
         print(product)
+        products += product
         break
-    return product
+    return products
+
 
 def save_to_excel(products):
-
-
     # создаем новый excel-файл
     wb = openpyxl.Workbook()
-
     # добавляем новый лист
     wb.create_sheet(title='Первый лист', index=0)
-
     # получаем лист, с которым будем работать
     sheet = wb['Первый лист']
-
     for row in range(1, 4):
         for col in range(1, 4):
             value = str(row) + str(col)
             cell = sheet.cell(row=row, column=col)
             cell.value = value
-
-    wb.save('example.xlsx')
-
+    wb.save('product.xlsx')
 
 
 def main():
@@ -105,16 +101,16 @@ def main():
     products = get_product(products_list, url_prefix=prefix)
 
 
-
 if __name__ == '__main__':
     # main()
-    product = {}
-    item = 'https://inshi.by/katalog/remmers/zashhita-drevesiny/antiseptiki/aqua-ig-15-impagniergrund-it'
-    response = requests.get(item)
-    soup = BeautifulSoup(response.text, 'lxml')
-    product['name'] = soup.find('h1').text
-    product['description'] = ''
-    descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
-    for description in descriptions:
-        product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
-    print(product)
+    # product = {}
+    # item = 'https://inshi.by/katalog/remmers/zashhita-drevesiny/antiseptiki/aqua-ig-15-impagniergrund-it'
+    # response = requests.get(item)
+    # soup = BeautifulSoup(response.text, 'lxml')
+    # product['name'] = soup.find('h1').text
+    # product['description'] = ''
+    # descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
+    # for description in descriptions:
+    #     product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
+    # print(product)
+    save_to_excel('test')
