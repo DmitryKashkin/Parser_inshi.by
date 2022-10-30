@@ -6,11 +6,12 @@ https://inshi.by/katalog/remmers
 
 https://inshi.by/katalog/instrument
 """
-
+import os
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
 import json
+from slugify import slugify
 
 exceptions_list = [
     'Кисти',
@@ -39,6 +40,8 @@ field_names = [
     'technical_description',
     'url',
 ]
+
+ROOT_FOLDER = 'products'
 
 
 def get_products_list(urls_list: list) -> list:
@@ -123,8 +126,44 @@ def save_to_excel(products):
 
 def load_json():
     with open('products.json', 'r') as fp:
-        products = json.load(fp)
-    return products
+        products0 = json.load(fp)
+    return products0
+
+
+def save_media(products):
+    i = 0
+    for product in products:
+        # print(product['name'])
+        sub_dir = slugify(product['name'])
+        folder = os.path.join(ROOT_FOLDER, sub_dir)
+        try:
+            os.mkdir(folder)
+        except FileExistsError:
+            print('double')
+            continue
+        os.chdir(folder)
+        for url in product['media']:
+            file_name = os.path.split(url)[1]
+            if file_name:
+                r = requests.get(url)
+                with open(os.path.split(url)[1], 'wb') as f:
+                    f.write(r.content)
+        try:
+            url = product['technical_description']
+        except KeyError:
+            pass
+        else:
+            if '?' in os.path.split(url)[1]:
+                pass
+            else:
+                r = requests.get(url)
+                with open(os.path.split(url)[1], 'wb') as f:
+                    f.write(r.content)
+        os.chdir("..")
+        os.chdir("..")
+        i += 1
+        # if i > 4:
+        #     break
 
 
 def main():
@@ -136,5 +175,5 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    # products = load_json()
-    # save_to_excel(products)
+    products = load_json()
+    save_media(products)
