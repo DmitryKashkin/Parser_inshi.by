@@ -52,11 +52,6 @@ def get_products_list(urls_list: list) -> list:
 
 def clear_products_list(products_list: list):
     cleared_list = []
-    # for item in products_list:
-    #     if itme in exceptions_list:
-    #         continue
-    #
-    # print(products_list)
     for item in products_list:
         if item.text in exceptions_list:
             continue
@@ -73,9 +68,13 @@ def get_product(products_list, url_prefix=''):
         soup = BeautifulSoup(response.text, 'lxml')
         product['name'] = soup.find('h1').text
         product['description'] = ''
-        descriptions = soup.find('div', class_="prod-desc js-product").find_all('p')
+        descriptions = soup.find('div', class_="sin-product-add-cart")
+        descriptions = descriptions.next_sibling.next_sibling.next_sibling.next_sibling.next_sibling.next_siblings
         for description in descriptions:
+            if description.name == 'hr':
+                break
             product['description'] += description.text.replace('\r', '').replace('\n', '').replace('\t', '') + '\n'
+        product['description'] = product['description'].replace('\n\n', '\n')
         medias = soup.find_all('a', class_="fancybox")
         product['media'] = []
         for media in medias:
