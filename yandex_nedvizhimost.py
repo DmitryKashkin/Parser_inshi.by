@@ -14,18 +14,46 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pyppeteer import launch
+import pickle
 
 URL = 'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO'
+URL2 = 'https://dzen.ru/?yredirect=true'
 CSS_CAPTCHA = '#root > div > div > form > div.Spacer.Spacer_auto-gap_bottom > div > div > div.CheckboxCaptcha-Anchor > input'
+PREFIX = 'https://realty.ya.ru'
 
 
 def main_captcha(driver):
+    driver.get(URL)
     try:
-        element = driver.find_element(By.CSS_SELECTOR, CSS_CAPTCHA)
-    except:
-        return
-    driver.execute_script("arguments[0].click();", element)
+        for cookie in pickle.load(open('ya_cookies', 'rb')):
+            driver.add_cookie(cookie)
+    except FileNotFoundError:
+        try:
+            element = driver.find_element(By.CSS_SELECTOR, CSS_CAPTCHA)
+        except:
+            return
+        driver.execute_script("arguments[0].click();", element)
+        sleep(3)
+        pickle.dump(driver.get_cookies(), open('ya_cookies', 'wb'))
+    else:
+        driver.get(URL)
     sleep(3)
+
+
+def get_spec(url, driver):
+    spec = {}
+    response = requests.get(url, cookies=driver.get_cookies())
+    # response = driver.execute_script(f'''
+    #     var xmlHttp = new XMLHttpRequest();
+    #     xmlHttp.open( "GET", "{url}", false );
+    #     xmlHttp.send( null );
+    #     return xmlHttp.responseText;
+    # '''
+    #                                  )
+    # soup = BeautifulSoup(response.text, 'lxml')
+    soup = BeautifulSoup(response.text, 'lxml')
+    spec['deadline'] = soup.find('span', string='Срок сдачи')
+    print(soup)
 
 
 # def popup_close(driver):
@@ -34,21 +62,17 @@ def main_captcha(driver):
 
 
 def main():
-    # response = requests.get(URL)
-    # print(response.text)
+    s = requests.Session()
     driver = webdriver.Chrome()
-    driver.get(URL)
     main_captcha(driver)
     soup = BeautifulSoup(driver.page_source, 'lxml')
     # print(soup)
     # sleep(30)
     while True:
-        # print('while')
         for item in soup.find_all('div', class_='SiteSnippetSearch SitesSerp__snippet'):
-            # print(item)
-            print(item.a.get('href'))
-            # for item2 in item.find_all('div', class_='Link Link_js_inited Link_size_m Link_theme_islands'):
-            #     print(item2.get('href'))
+            url = PREFIX + item.a.get('href')
+            print(url)
+            get_spec(url, driver)
         break
 
     #     'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO&page=48'
