@@ -46,6 +46,11 @@ def get_spec(url, s):
     soup = BeautifulSoup(response.text, 'lxml')
     spec['deadline'] = soup.find('span', string='Срок сдачи').next_sibling.text.replace('\xa0',' ')
     spec['class'] = soup.find('span', string='Класс жилья').next_sibling.a.text.replace('\xa0',' ')
+    spec['home_type'] = soup.find('div', string='Тип дома').next_sibling.text.replace('\xa0',' ')
+    spec['buildings'] = soup.find('div', string='Число корпусов').next_sibling.text.replace('\xa0',' ')
+    spec['finish'] = soup.find('div', string='Отделка').next_sibling.text.replace('\xa0',' ')
+    spec['queues'] = soup.find('div', string='Очереди').next_sibling.text.replace('\xa0',' ')
+    spec['num_of_apart'] = soup.find('div', string='Число квартир').next_sibling.text.replace('\xa0',' ')
     print(spec)
 
 
