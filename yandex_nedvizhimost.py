@@ -40,20 +40,13 @@ def main_captcha(driver):
     sleep(3)
 
 
-def get_spec(url, driver):
+def get_spec(url, s):
     spec = {}
-    response = requests.get(url, cookies=driver.get_cookies())
-    # response = driver.execute_script(f'''
-    #     var xmlHttp = new XMLHttpRequest();
-    #     xmlHttp.open( "GET", "{url}", false );
-    #     xmlHttp.send( null );
-    #     return xmlHttp.responseText;
-    # '''
-    #                                  )
-    # soup = BeautifulSoup(response.text, 'lxml')
+    response = s.get(url)
     soup = BeautifulSoup(response.text, 'lxml')
-    spec['deadline'] = soup.find('span', string='Срок сдачи')
-    print(soup)
+    spec['deadline'] = soup.find('span', string='Срок сдачи').next_sibling.text.replace('\xa0',' ')
+    spec['class'] = soup.find('span', string='Класс жилья').next_sibling.a.text.replace('\xa0',' ')
+    print(spec)
 
 
 # def popup_close(driver):
@@ -63,31 +56,22 @@ def get_spec(url, driver):
 
 def main():
     s = requests.Session()
+    # resp=s.get(URL)
+    # print(resp.text)
     driver = webdriver.Chrome()
     main_captcha(driver)
+    [s.cookies.set(c['name'], c['value']) for c in driver.get_cookies()]
     soup = BeautifulSoup(driver.page_source, 'lxml')
-    # print(soup)
-    # sleep(30)
     while True:
         for item in soup.find_all('div', class_='SiteSnippetSearch SitesSerp__snippet'):
             url = PREFIX + item.a.get('href')
             print(url)
-            get_spec(url, driver)
+            get_spec(url, s)
         break
 
-    #     'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO&page=48'
-    # print(driver.page_source)
 
 
-# async def main2():
-#     browser = await launch()
-#     # page = await browser.newPage()
-#     # await page.goto('https://example.com')
-#     # await page.screenshot({'path': 'example.png'})
-#     sleep(30)
-#     await browser.close()
 
 
 if __name__ == '__main__':
     main()
-    # asyncio.get_event_loop().run_until_complete(main2())
