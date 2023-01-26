@@ -20,7 +20,7 @@ URL = 'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showO
 PAGE = 'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO&page='
 CSS_CAPTCHA = '#root > div > div > form > div.Spacer.Spacer_auto-gap_bottom > div > div > div.CheckboxCaptcha-Anchor > input'
 PREFIX = 'https://realty.ya.ru'
-
+FILENAME = 'yandex_nedvizhimost.xlsx'
 
 def main_captcha(driver, url, s):
     while True:
@@ -41,6 +41,19 @@ def main_captcha(driver, url, s):
     return response
 
 
+def export_xls(spec_list):
+    try:
+        wb = openpyxl.load_workbook(FILENAME)
+    except FileNotFoundError:
+        wb = openpyxl.Workbook()
+        wb.create_sheet(title='Первый лист', index=0)
+    ws = wb.worksheets[0]
+    for row_data in spec_list:
+        ws.append(list(row_data.values()))
+        # print(list(row_data.values()))
+    wb.save(FILENAME)
+
+
 def get_spec(url, s, driver):
     spec = {}
     while True:
@@ -51,10 +64,15 @@ def get_spec(url, s, driver):
     if 'captcha' in response.text:
         response = main_captcha(driver, url, s)
     soup = BeautifulSoup(response.text, 'lxml')
-    spec['realty_object'] = soup.find('h1', class_='SiteCardHeader__title')
+    spec['url'] = url
+    spec['realty_object'] = soup.find('h1').text.replace('\xa0', ' ')
+    # spec['realty_object'] = soup.find('h1', class_='SiteCardHeader__title').text.replace('\xa0', ' ')
     spec['deadline'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
     spec['class'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
-    spec['home_type'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.contents[0].contents[3].contents[1].contents[1].text.replace('\xa0', ' ')
+    try:
+        spec['home_type'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
+    except:
+        spec['home_type'] = 'Нет данных'
     spec['buildings'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.contents[0].contents[3].contents[1].contents[1].text.replace('\xa0', ' ')
     finish = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Отделка')
     if finish:
@@ -68,8 +86,12 @@ def get_spec(url, s, driver):
         try:
             spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир и апартаментов').next_sibling.text.replace('\xa0', ' ')
         except:
-            spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число апартаментов').next_sibling.text.replace('\xa0', ' ')
+            try:
+                spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число апартаментов').next_sibling.text.replace('\xa0', ' ')
+            except:
+                spec['num_of_apart'] = 'Нет данных'
     print(spec)
+    return spec
 
 
 def main():
@@ -79,11 +101,13 @@ def main():
     soup = BeautifulSoup(response.text, 'lxml')
     page_number = 1
     while True:
+        spec_list=[]
         print('!!!!!page_number ', page_number)
         for item in soup.find_all('div', class_='SiteSnippetSearch SitesSerp__snippet'):
             url = PREFIX + item.a.get('href')
             print(url)
-            get_spec(url, s, driver)
+            spec_list.append(get_spec(url, s, driver))
+        export_xls(spec_list)
         page_number += 1
         url = PAGE + str(page_number)
         print(url)
