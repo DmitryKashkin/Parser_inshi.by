@@ -55,7 +55,16 @@ def export_xls(spec_list):
 
 
 def get_spec(url, s, driver):
-    spec = {}
+    spec = {'url': ' ',
+            'realty_object': ' ',
+            'deadline': ' ',
+            'class': ' ',
+            'home_type': ' ',
+            'buildings': ' ',
+            'finish': ' ',
+            'queues': ' ',
+            'num_of_apart': ' ',
+            }
     while True:
         response = s.get(url)
         if response:
@@ -66,30 +75,78 @@ def get_spec(url, s, driver):
     soup = BeautifulSoup(response.text, 'lxml')
     spec['url'] = url
     spec['realty_object'] = soup.find('h1').text.replace('\xa0', ' ')
-    # spec['realty_object'] = soup.find('h1', class_='SiteCardHeader__title').text.replace('\xa0', ' ')
-    spec['deadline'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
-    spec['class'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
+    description = soup.find('h2', class_='SiteCardDescription__title--35WGe')
+    about_object = soup.find('h2', string='Об объекте')
+    if about_object:
+        try:
+            spec['deadline'] = about_object.next_sibling.find('span', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
+        except:
+            ...
+        try:
+            spec['class'] = about_object.next_sibling.find('span', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
+        except:
+            ...
     try:
-        spec['home_type'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
+        spec['home_type'] = description.next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
     except:
-        spec['home_type'] = 'Нет данных'
-    spec['buildings'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.contents[0].contents[3].contents[1].contents[1].text.replace('\xa0', ' ')
-    finish = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Отделка')
-    if finish:
-        spec['finish'] = finish.next_sibling.text.replace('\xa0', ' ')
-    else:
-        spec['finish'] = 'Нет данных'
-    spec['queues'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Очереди').next_sibling.text.replace('\xa0', ' ')
+        ...
     try:
-        spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир').next_sibling.text.replace('\xa0', ' ')
+        spec['buildings'] = description.next_sibling.find('div', string='Число корпусов').next_sibling.text.replace('\xa0', ' ')
+    except:
+        ...
+    try:
+        spec['finish'] = description.next_sibling.find('div', string='Отделка').next_sibling.text.replace('\xa0', ' ')
+    except:
+        ...
+    try:
+        spec['queues'] = description.next_sibling.find('div', string='Очереди').next_sibling.text.replace('\xa0', ' ')
+    except:
+        ...
+    try:
+        spec['num_of_apart'] = description.next_sibling.find('div', string='Число квартир').next_sibling.text.replace('\xa0', ' ')
     except:
         try:
-            spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир и апартаментов').next_sibling.text.replace('\xa0', ' ')
+            spec['num_of_apart'] = description.next_sibling.find('div',
+                                                                 string='Число квартир и апартаментов').next_sibling.text.replace(
+                '\xa0', ' ')
         except:
             try:
-                spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число апартаментов').next_sibling.text.replace('\xa0', ' ')
+                spec['num_of_apart'] = description.next_sibling.find('div',
+                                                                     string='Число апартаментов').next_sibling.text.replace(
+                    '\xa0', ' ')
             except:
-                spec['num_of_apart'] = 'Нет данных'
+                ...
+
+
+
+
+
+    # spec['deadline'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
+    # spec['class'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
+    # try:
+    #     spec['home_type'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
+    # except:
+    #     spec['home_type'] = 'Нет данных'
+
+    # spec['buildings'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.contents[0].contents[3].contents[1].contents[1].text.replace('\xa0', ' ')
+
+    # finish = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Отделка')
+    # if finish:
+    #     spec['finish'] = finish.next_sibling.text.replace('\xa0', ' ')
+    # else:
+    #     spec['finish'] = 'Нет данных'
+
+    # spec['queues'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Очереди').next_sibling.text.replace('\xa0', ' ')
+    # try:
+    #     spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир').next_sibling.text.replace('\xa0', ' ')
+    # except:
+    #     try:
+    #         spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир и апартаментов').next_sibling.text.replace('\xa0', ' ')
+    #     except:
+    #         try:
+    #             spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число апартаментов').next_sibling.text.replace('\xa0', ' ')
+    #         except:
+    #             spec['num_of_apart'] = 'Нет данных'
     print(spec)
     return spec
 
