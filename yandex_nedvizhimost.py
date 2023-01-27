@@ -22,6 +22,7 @@ CSS_CAPTCHA = '#root > div > div > form > div.Spacer.Spacer_auto-gap_bottom > di
 PREFIX = 'https://realty.ya.ru'
 FILENAME = 'yandex_nedvizhimost.xlsx'
 
+
 def main_captcha(driver, url, s):
     while True:
         driver.delete_all_cookies()
@@ -79,19 +80,23 @@ def get_spec(url, s, driver):
     about_object = soup.find('h2', string='Об объекте')
     if about_object:
         try:
-            spec['deadline'] = about_object.next_sibling.find('span', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
+            spec['deadline'] = about_object.next_sibling.find('span', string='Срок сдачи').next_sibling.text.replace(
+                '\xa0', ' ')
         except:
             ...
         try:
-            spec['class'] = about_object.next_sibling.find('span', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
+            spec['class'] = about_object.next_sibling.find('span', string='Класс жилья').next_sibling.text.replace(
+                '\xa0', ' ')
         except:
             ...
     try:
-        spec['home_type'] = description.next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
+        spec['home_type'] = description.next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0',
+                                                                                                              ' ')
     except:
         ...
     try:
-        spec['buildings'] = description.next_sibling.find('div', string='Число корпусов').next_sibling.text.replace('\xa0', ' ')
+        spec['buildings'] = description.next_sibling.find('div', string='Число корпусов').next_sibling.text.replace(
+            '\xa0', ' ')
     except:
         ...
     try:
@@ -103,7 +108,8 @@ def get_spec(url, s, driver):
     except:
         ...
     try:
-        spec['num_of_apart'] = description.next_sibling.find('div', string='Число квартир').next_sibling.text.replace('\xa0', ' ')
+        spec['num_of_apart'] = description.next_sibling.find('div', string='Число квартир').next_sibling.text.replace(
+            '\xa0', ' ')
     except:
         try:
             spec['num_of_apart'] = description.next_sibling.find('div',
@@ -117,52 +123,33 @@ def get_spec(url, s, driver):
             except:
                 ...
 
-
-
-
-
-    # spec['deadline'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Срок сдачи').next_sibling.text.replace('\xa0', ' ')
-    # spec['class'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Класс жилья').next_sibling.text.replace('\xa0', ' ')
-    # try:
-    #     spec['home_type'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.find('div', string='Тип дома').next_sibling.text.replace('\xa0', ' ')
-    # except:
-    #     spec['home_type'] = 'Нет данных'
-
-    # spec['buildings'] = soup.find('h2', class_='SiteCardDescription__title--35WGe').next_sibling.contents[0].contents[3].contents[1].contents[1].text.replace('\xa0', ' ')
-
-    # finish = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Отделка')
-    # if finish:
-    #     spec['finish'] = finish.next_sibling.text.replace('\xa0', ' ')
-    # else:
-    #     spec['finish'] = 'Нет данных'
-
-    # spec['queues'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Очереди').next_sibling.text.replace('\xa0', ' ')
-    # try:
-    #     spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир').next_sibling.text.replace('\xa0', ' ')
-    # except:
-    #     try:
-    #         spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число квартир и апартаментов').next_sibling.text.replace('\xa0', ' ')
-    #     except:
-    #         try:
-    #             spec['num_of_apart'] = soup.find('h2', string='Ещё параметры').next_sibling.find('div', string='Число апартаментов').next_sibling.text.replace('\xa0', ' ')
-    #         except:
-    #             spec['num_of_apart'] = 'Нет данных'
     print(spec)
     return spec
 
 
 def main():
+    url_list = []
+    try:
+        wb = openpyxl.load_workbook(FILENAME)
+        ws = wb.worksheets[0]
+    except FileNotFoundError:
+        ...
+    for row in range(1, ws.max_row + 1):
+        url_list.append(ws.cell(row, 1).value)
     s = requests.Session()
     driver = webdriver.Chrome()
     response = main_captcha(driver, URL, s)
     soup = BeautifulSoup(response.text, 'lxml')
     page_number = 1
     while True:
-        spec_list=[]
+        spec_list = []
         print('!!!!!page_number ', page_number)
         for item in soup.find_all('div', class_='SiteSnippetSearch SitesSerp__snippet'):
             url = PREFIX + item.a.get('href')
             print(url)
+            if url in url_list:
+                print('skip')
+                continue
             spec_list.append(get_spec(url, s, driver))
         export_xls(spec_list)
         page_number += 1
