@@ -1,20 +1,10 @@
 import asyncio
-import os
 from time import sleep
 from selenium import webdriver
-import selenium
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
-import json
-# from slugify import slugify
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from pyppeteer import launch
-import pickle
 
 URL = 'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO'
 PAGE = 'https://realty.ya.ru/moskva_i_moskovskaya_oblast/kupit/novostrojka/?showOutdated=NO&page='
@@ -155,14 +145,15 @@ def main():
         page_number += 1
         url = PAGE + str(page_number)
         print(url)
-        while True:
-            response = s.get(url)
-            if response:
-                break
-            continue
+        # while True:
+        #     response = s.get(url)
+        #     if response:
+        #         break
+        #     continue
+        response = s.get(url)
         if 'captcha' in response.text:
             response = main_captcha(driver, url, s)
-        if '404' in response:
+        if response.status_code == 404:
             break
         soup = BeautifulSoup(response.text, 'lxml')
 
