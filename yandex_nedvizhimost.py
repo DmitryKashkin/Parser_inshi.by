@@ -122,10 +122,10 @@ def main():
     try:
         wb = openpyxl.load_workbook(FILENAME)
         ws = wb.worksheets[0]
+        for row in range(1, ws.max_row + 1):
+            url_list.append(ws.cell(row, 1).value)
     except FileNotFoundError:
         ...
-    for row in range(1, ws.max_row + 1):
-        url_list.append(ws.cell(row, 1).value)
     s = requests.Session()
     driver = webdriver.Chrome()
     response = main_captcha(driver, URL, s)
@@ -145,11 +145,6 @@ def main():
         page_number += 1
         url = PAGE + str(page_number)
         print(url)
-        # while True:
-        #     response = s.get(url)
-        #     if response:
-        #         break
-        #     continue
         response = s.get(url)
         if 'captcha' in response.text:
             response = main_captcha(driver, url, s)
