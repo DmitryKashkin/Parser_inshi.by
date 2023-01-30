@@ -58,11 +58,15 @@ def get_spec(url, s):
         '\n', '')
     catalogue_pages = relatedInfo_relatedInfoFull.find('a', class_='sx-product-download').get('data-filename')
     item_spec['catalogue_pages'] = url + catalogue_pages
-    url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&#'
-    form_data = {'target': "_blank",
-                 'class': "sx-product-download",
-                 'data-guid': "9e3d3706-f2f8-43a8-9918-25733535b871",
-                 'data-filename': "Gesamtkatalog DE-EN  717.pdf"
+    url0 = 'https://shop.schaefer-peters.com/index.php'
+    # url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&'
+    form_data = {'stoken': "CA4B2959",
+                 'lang': "1",
+                 'fnc': "sxdownloadpdffile",
+                 'cl': "details",
+                 'guid': "f33cf161-1cc3-402b-9a3a-e25c4508d963",
+                 'filename': "Gesamtkatalog DE-EN  775.pdf",
+                 'anid': "1c43f924d5710d1d791651141b8e4445",
                  }
     pdf = s.post(url0, data=form_data)
 
