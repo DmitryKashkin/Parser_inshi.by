@@ -1,11 +1,15 @@
 from time import sleep
 import requests
 from bs4 import BeautifulSoup
+import fake_useragent
 
 item_list = []
 SUFFIX = '?pgNr='
 URL = 'https://shop.schaefer-peters.com/en/'
-
+user = fake_useragent.UserAgent().random
+header = {
+    'user-agent': user
+}
 
 def get_item(cat_list, s):
     for url in cat_list:
@@ -58,17 +62,18 @@ def get_spec(url, s):
         '\n', '')
     catalogue_pages = relatedInfo_relatedInfoFull.find('a', class_='sx-product-download').get('data-filename')
     item_spec['catalogue_pages'] = url + catalogue_pages
-    url0 = 'https://shop.schaefer-peters.com/index.php'
-    # url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&'
+    # url0 = 'https://shop.schaefer-peters.com/DIN-80704-A4-M-10/'
+    url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&amp'
     form_data = {'stoken': "CA4B2959",
                  'lang': "1",
                  'fnc': "sxdownloadpdffile",
                  'cl': "details",
-                 'guid': "f33cf161-1cc3-402b-9a3a-e25c4508d963",
-                 'filename': "Gesamtkatalog DE-EN  775.pdf",
-                 'anid': "1c43f924d5710d1d791651141b8e4445",
+                 'guid': "a22f0b16-97f4-410e-982d-46b2f6947f6c",
+                 'filename': "Gesamtkatalog DE-EN 598.pdf",
+                 'anid': "56a7d0df1a3c39d35217ce48f9d246ca"
                  }
-    pdf = s.post(url0, data=form_data)
+    pdf = requests.post(url0, data=form_data, headers=header)
+    # pdf = s.post(url0, data=form_data)
 
     # pdf = s.get(item_spec['catalogue_pages'])
     sleep(3)
