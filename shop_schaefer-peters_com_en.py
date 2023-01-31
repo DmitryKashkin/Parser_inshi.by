@@ -2,16 +2,19 @@ from time import sleep
 import requests
 from bs4 import BeautifulSoup
 import fake_useragent
+import re
 
-item_list = []
 SUFFIX = '?pgNr='
 URL = 'https://shop.schaefer-peters.com/en/'
 user = fake_useragent.UserAgent().random
 header = {
     'user-agent': user
 }
+pattern = re.compile(r'tab\d')
+
 
 def get_item(cat_list, s):
+    item_list = []
     for url in cat_list:
         suffix = ''
         page = 0
@@ -26,6 +29,7 @@ def get_item(cat_list, s):
                 item_list.append(get_spec(item.find('a').get('href'), s))
             page += 1
             suffix = SUFFIX + str(page)
+    return item_list
 
 
 def get_spec(url, s):
@@ -36,6 +40,7 @@ def get_spec(url, s):
         'url': ' ',
         'img_urls': ' ',
     }
+    keys = {}
     response = s.get(url)
     soup = BeautifulSoup(response.text, 'lxml')
     item_spec['cat_path'] = soup.find('div', id='breadcrumb').text
@@ -53,30 +58,49 @@ def get_spec(url, s):
             key = attrib.contents[1].text.replace('\n', '')
             value = attrib.contents[3].text.replace('\n', '').replace(' ', '')
             item_spec[key] = value
-    relatedInfo_relatedInfoFull = content_box.find('div', class_='tab-content')
-    for attrib in relatedInfo_relatedInfoFull.find_all('div', class_='row'):
+    # relatedInfo_relatedInfoFull = content_box.find('div', class_='tab-content')
+    relatedInfo_relatedInfoFull = content_box.find('div', class_='relatedInfo relatedInfoFull')
+    # for attrib in relatedInfo_relatedInfoFull.find_all('div', class_='row'):
+    # attribs = relatedInfo_relatedInfoFull.find_all('div', {'id': re.compile(r'tab\d')})
+    for attrib in relatedInfo_relatedInfoFull.find('div', id='tab1').find_all('div', class_='row'):
         key = attrib.contents[1].text.replace('\n', '')
         value = attrib.contents[3].text.replace('\n', '').replace(' ', '')
         item_spec[key] = value
-    item_spec['application_area'] = relatedInfo_relatedInfoFull.find('div', class_="tab-pane", id='tab4').text.replace(
-        '\n', '')
-    catalogue_pages = relatedInfo_relatedInfoFull.find('a', class_='sx-product-download').get('data-filename')
-    item_spec['catalogue_pages'] = url + catalogue_pages
-    # url0 = 'https://shop.schaefer-peters.com/DIN-80704-A4-M-10/'
-    url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&amp'
-    form_data = {'stoken': "CA4B2959",
-                 'lang': "1",
-                 'fnc': "sxdownloadpdffile",
-                 'cl': "details",
-                 'guid': "a22f0b16-97f4-410e-982d-46b2f6947f6c",
-                 'filename': "Gesamtkatalog DE-EN 598.pdf",
-                 'anid': "56a7d0df1a3c39d35217ce48f9d246ca"
-                 }
-    pdf = requests.post(url0, data=form_data, headers=header)
-    # pdf = s.post(url0, data=form_data)
+    for attrib in relatedInfo_relatedInfoFull.find('ul', class_="responsive-tabs nav nav-tabs").find_all('li'):
+        key = attrib.a.text.replace('\n', '')
+        key0 = attrib.a.get('href')[1:]
+        keys[key0] = key
+        value = ''
+        item_spec[key] = value
 
-    # pdf = s.get(item_spec['catalogue_pages'])
-    sleep(3)
+    for attrib in relatedInfo_relatedInfoFull.find_all('div', {'id': re.compile(r'tab\d')}):
+        if attrib.get('id') == 'tab1':
+            continue
+        key0 = attrib.get('id')
+        key = keys[key0]
+        value = attrib.text.replace('\n', '')
+        item_spec[key] = value
+
+    # item_spec['application_area'] = relatedInfo_relatedInfoFull.find('div', class_="tab-pane", id='tab4').text.replace(
+    #     '\n', '')
+    # catalogue_pages = relatedInfo_relatedInfoFull.find('a', class_='sx-product-download').get('data-filename')
+    # item_spec['catalogue_pages'] = url + catalogue_pages
+    # # url0 = 'https://shop.schaefer-peters.com/DIN-80704-A4-M-10/'
+    # url0 = 'https://shop.schaefer-peters.com/index.php?lang=1&amp'
+    # form_data = {'stoken': "CA4B2959",
+    #              'lang': "1",
+    #              'fnc': "sxdownloadpdffile",
+    #              'cl': "details",
+    #              'guid': "a22f0b16-97f4-410e-982d-46b2f6947f6c",
+    #              'filename': "Gesamtkatalog DE-EN 598.pdf",
+    #              'anid': "56a7d0df1a3c39d35217ce48f9d246ca"
+    #              }
+    # pdf = requests.post(url0, data=form_data, headers=header)
+    # # pdf = s.post(url0, data=form_data)
+    #
+    # # pdf = s.get(item_spec['catalogue_pages'])
+    # sleep(3)
+    return item_spec
 
 
 def get_cat(url, s):
@@ -92,7 +116,7 @@ def get_cat(url, s):
 def main():
     s = requests.Session()
     cat_list = get_cat(URL, s)
-    get_item(cat_list, s)
+    item_list = get_item(cat_list, s)
 
 
 if __name__ == '__main__':
