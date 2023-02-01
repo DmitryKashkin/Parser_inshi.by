@@ -1,4 +1,5 @@
 from time import sleep
+import openpyxl
 import requests
 from bs4 import BeautifulSoup
 import fake_useragent
@@ -11,25 +12,71 @@ header = {
     'user-agent': user
 }
 pattern = re.compile(r'tab\d')
+FILENAME = 'shop.schaefer-peters.xlsx'
+
+
+def export_xls(item_list):
+    header = {}
+    try:
+        wb = openpyxl.load_workbook(FILENAME)
+        ws = wb.worksheets[0]
+        for col in range(1, ws.max_column + 1): # Получаем заголовок таблицы
+            # header.append(ws.cell(1,col).value)
+            header[ws.cell(1, col).value] = col
+    except FileNotFoundError:
+        wb = openpyxl.Workbook()
+        wb.create_sheet(title='Первый лист', index=0)
+    ws = wb.worksheets[0]
+    max_row = ws.max_row
+    for row_data in item_list:
+        for key, value in row_data.items():
+            try:
+                header[key]
+            except KeyError:
+                try:
+                    header[key] = max(header.values()) + 1
+                except ValueError:
+                    header[key] = 1
+            ws.cell(max_row + 1, header[key]).value = value
+        # ws.append(list(row_data.values()))
+        # print(list(row_data.values()))
+        max_row += 1
+    for key, value in header.items(): # обновляем заголовок таблицы
+        ws.cell(1,value).value = key
+    wb.save(FILENAME)
 
 
 def get_item(cat_list, s):
-    item_list = []
+    exclusion_list = []
+    try:  # check downloaded items
+        wb = openpyxl.load_workbook(FILENAME)
+        ws = wb.worksheets[0]
+        for row in range(1, ws.max_row + 1):
+            exclusion_list.append(ws.cell(row, 4).value)
+    except FileNotFoundError:
+        ...
+
     for url in cat_list:
         suffix = ''
         page = 0
-        while True:
+        while True:  # получаем данные постранично
+            item_list = []
             response = s.get(url + suffix)
             if response.url != url + suffix:
                 break
             soup = BeautifulSoup(response.text, 'lxml')
             tbody = soup.find('div', class_='list-container')
             for item in tbody.find_all('tr', class_='sp-product-item'):
-                print(item.find('a').get('href'))
-                item_list.append(get_spec(item.find('a').get('href'), s))
+                item_url = item.find('a').get('href')
+                print(item_url)
+                if item_url in exclusion_list:
+                    print('skip')
+                    continue
+                item_list.append(get_spec(item_url, s))
+            export_xls(item_list)
             page += 1
             suffix = SUFFIX + str(page)
-    return item_list
+            # sleep(1)
 
 
 def get_spec(url, s):
@@ -116,7 +163,7 @@ def get_cat(url, s):
 def main():
     s = requests.Session()
     cat_list = get_cat(URL, s)
-    item_list = get_item(cat_list, s)
+    get_item(cat_list, s)
 
 
 if __name__ == '__main__':
