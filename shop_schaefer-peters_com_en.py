@@ -1,3 +1,4 @@
+import os
 from time import sleep
 import openpyxl
 import requests
@@ -20,7 +21,7 @@ def export_xls(item_list):
     try:
         wb = openpyxl.load_workbook(FILENAME)
         ws = wb.worksheets[0]
-        for col in range(1, ws.max_column + 1): # Получаем заголовок таблицы
+        for col in range(1, ws.max_column + 1):  # Получаем заголовок таблицы
             # header.append(ws.cell(1,col).value)
             header[ws.cell(1, col).value] = col
     except FileNotFoundError:
@@ -41,9 +42,26 @@ def export_xls(item_list):
         # ws.append(list(row_data.values()))
         # print(list(row_data.values()))
         max_row += 1
-    for key, value in header.items(): # обновляем заголовок таблицы
-        ws.cell(1,value).value = key
+    for key, value in header.items():  # обновляем заголовок таблицы
+        ws.cell(1, value).value = key
     wb.save(FILENAME)
+
+
+def image_download(s, cat_path, img_urls):
+    file_path = cat_path.replace('•', '/').replace('\n', '').replace(' ', '')
+    file_path = file_path[:file_path.rfind('/')]
+    full_file_path = os.path.join(os.getcwd(), os.path.normpath(file_path))
+    if os.path.exists(full_file_path):
+        return
+    command = 'mkdir ' + '"' + file_path + '"'
+    os.system(command)
+    for url in img_urls.split(', '):
+        response = s.get(url)
+        file_name = url[url.rfind('/') + 1:]
+        file_name = os.path.join(full_file_path, file_name)
+        with open(file_name, "wb") as file:
+            file.write(response.content)
+    sleep(1)
 
 
 def get_item(cat_list, s):
@@ -55,7 +73,6 @@ def get_item(cat_list, s):
             exclusion_list.append(ws.cell(row, 4).value)
     except FileNotFoundError:
         ...
-
     for url in cat_list:
         suffix = ''
         page = 0
@@ -99,6 +116,7 @@ def get_spec(url, s):
     img_urls = content_box.find('div', class_='details-image-gallery')
     item_spec['img_urls'] = ', '.join(
         [i.get('data-src') for i in img_urls.find_all('div', class_='item') if i.get('data-src')])
+    image_download(s, item_spec['cat_path'], item_spec['img_urls'])
     custom_attributes = content_box.find('div', class_='custom-attributes').find_all('div', class_='row')
     for attrib in custom_attributes:
         if attrib.div.span.strong:
